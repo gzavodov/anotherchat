@@ -192,6 +192,11 @@ if(typeof(UserChat) === "undefined")
 				return;
 			}			
 			
+			if(!window.confirm("Do you really want to remove this message?"))
+			{
+				return;
+			}
+			
 			this._socketClient.send(
 				{ 
 					topic: "request", 
@@ -701,7 +706,7 @@ if(typeof(MessagePanelItem) === "undefined")
 				body.css("position", "relative");
 				this._deleteButton = $(
 					"<small/>", 
-					{ "html": "<button class='btn btn-xs pull-bottom'><span class='glyphicon glyphicon-trash'></span></button>" }
+					{ "html": "<button class='btn btn-xs pull-bottom' title='Remove this message'><span class='glyphicon glyphicon-trash'></span></button>" }
 				);
 				this._deleteButton.css("position", "absolute").css("bottom", "0").css("right", "0");
 				this._deleteButton.on("click", $.proxy(this.onDeleteButtonClick, this));
