@@ -1,11 +1,8 @@
 @extends('layouts.master')
-@section('title', "Chat / ".e($userName));
+@section('title', "Administration / ".e($userName));
 @section('navigation')	
 	<ul class="nav navbar-nav">
-	<li class="active"><a href="user">Chat</a></li>
-	@if($isAdmin)
-	<li><a href="admin">Administration</a></li>	
-	@endif
+	<li class="active"><a href="admin">Administration</a></li>
 	<li><a href="../auth/logout">Logout</a></li>
 	</ul>
 @stop
@@ -22,15 +19,6 @@
 		</div>
 		<div id="message_wrapper" class="message-wrap col-lg-8" style="display:none;">
 			<div id="message_list" class="msg-wrap"></div>
-			<div id="message_send" class="send-wrap">
-				<textarea id="message_input" class="form-control send-message" rows="3" placeholder="Write a message..."></textarea>
-			</div>
-			<div id="button_panel" class="btn-panel">
-				<a id="send_button" href="#" class="col-lg-4 text-right btn send-message-btn pull-right" role="button">
-					<i class="fa fa-plus"></i>
-					Send Message (crtl + enter)
-				</a>
-			</div>
 		</div>
 	</div>
 </div>	
@@ -41,16 +29,14 @@
 			WebSocketClient.serviceUrl = "{{ $serviceUrl }}";
 			UserChat.create(
 				{ 
-					scope: UserChatScope.personal,
-					enableWrite: true,
-					enableDelete: false,
+					scope: UserChatScope.global,
+					enableWrite: false,
+					enableDelete: true,
 					userId: {{ $userId }}, 
 					userWrapperId: "user_wrapper",
 					userListId: "user_list", 
 					messageWrapperId: "message_wrapper",
-					messageListId: "message_list", 
-					messageInputId: "message_input",
-					sendButtonId: "send_button",
+					messageListId: "message_list",
 					errorWrapperId: "error_wrapper"
 				}
 			);

@@ -172,7 +172,7 @@ class CustomAuthController extends Controller
 	public function redirectPath()
 	{
 		$user = $this->getUser();
-		return $user !== null && $user->isAdmin() ? 'chat/admin' : 'chat/user';
+		return $user !== null && $user->isAdmin() ? 'home/admin' : 'home/user';
 	}
 	
 	/**

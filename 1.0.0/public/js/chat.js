@@ -150,7 +150,7 @@ if(typeof(UserChat) === "undefined")
 			if(addresseeId <= 0)
 			{
 				alert("Addressee is not selected. Please, select an Addressee.");
-				return;				
+				return;
 			}
 			
 			if(!this._socketClient.isReady())
@@ -206,32 +206,41 @@ if(typeof(UserChat) === "undefined")
 		},
 		registerMessages: function(data)
 		{
-			var selectedUserId = this._userPanel.getSelectedUserId();
-			var messageCount = 0;
-			for (var i = 0; i < data.length; i++)
+			if(!this._messagePanel.hasLayout())
 			{
-				var d = data[i];
-				var addresserId = parseInt(d["from_id"]);
-				var addresseeId = parseInt(d["to_id"]);
-				if(selectedUserId == addresserId || selectedUserId == addresseeId)
+				this._messagePanel.setData(data);
+				this._messagePanel.layout();
+			}
+			else
+			{
+				var selectedUserId = this._userPanel.getSelectedUserId();
+				var messageCount = 0;
+				for (var i = 0; i < data.length; i++)
 				{
-					this._messagePanel.createItem(d);
-					messageCount++;
-				}
-				else
-				{
-					var addresserItem = this._userPanel.getItemById(addresserId);
-					if(addresserItem)
+					var d = data[i];
+					var addresserId = parseInt(d["from_id"]);
+					var addresseeId = parseInt(d["to_id"]);
+					
+					if(selectedUserId == addresserId || selectedUserId == addresseeId)
 					{
-						addresserItem.incrementUnreadMessageCount(1);
+						this._messagePanel.createItem(d);
+						messageCount++;
+					}
+					else
+					{
+						var addresserItem = this._userPanel.getItemById(addresserId);
+						if(addresserItem)
+						{
+							addresserItem.incrementUnreadMessageCount(1);
+						}
 					}
 				}
-			}
-			
-			if(messageCount > 0)
-			{
-				this._messagePanel.scrollToBottom();
-			}
+				
+				if(messageCount > 0)
+				{
+					this._messagePanel.scrollToBottom();
+				}				
+			}				
 		},
 		onSendButtonClick: function(e)
 		{
@@ -281,7 +290,7 @@ if(typeof(UserChat) === "undefined")
 			  }
 			  default:
 				break;
-			}			
+			}
 		},
 		onSocketError: function(e)
 		{
@@ -301,7 +310,7 @@ if(typeof(UserChat) === "undefined")
 					type: MessageType.warning,
 					text: "WebSocket was closed." 
 				}
-			).layout();			
+			).layout();
 		}
 	};
 
@@ -553,8 +562,10 @@ if(typeof(MessagePanel) === "undefined")
 		this._settings = {};
 		this._chat = null;
 		this._container = null;
+		this._message = null;
 		this._data = [];
 		this._items = [];
+		this._hasLayout = false;
 	};
 	
 	MessagePanel.prototype = 
@@ -580,9 +591,17 @@ if(typeof(MessagePanel) === "undefined")
 		},
 		createItem: function(data)
 		{
-			var item = MessagePanelItem.create({ data: data, container: this._container, chat: this._chat, panel: this });
-			this._items.push(item);
-			item.layout();	
+			if(!this._hasLayout)
+			{
+				this._data.push(data);
+			}
+			else
+			{
+				this.hideStub();
+				var item = MessagePanelItem.create({ data: data, container: this._container, chat: this._chat, panel: this });
+				this._items.push(item);
+				item.layout();
+			}
 		},
 		removeItemByMessageId: function(messageId)
 		{
@@ -595,28 +614,82 @@ if(typeof(MessagePanel) === "undefined")
 					this._items.splice(i, 1);
 					break;
 				}
-			}			
+			}
+
+			if(this._items.length === 0)
+			{
+				this.showStub();
+			}
 		},
 		scrollToBottom: function()
 		{
 			this._container.scrollTop = this._container.scrollHeight;
 		},
+		hasLayout: function()
+		{
+			return this._hasLayout;
+		},
 		layout: function()
 		{
-			for(var i = 0; i < this._data.length; i++)
+			if(this._hasLayout)
 			{
-				var item = MessagePanelItem.create({ data: this._data[i], container: this._container, chat: this._chat, panel: this });
-				this._items.push(item);
-				item.layout();
+				return;
 			}
+		
+			if(this._data.length === 0)
+			{
+				this.showStub();
+			}
+			else
+			{
+				for(var i = 0; i < this._data.length; i++)
+				{
+					var item = MessagePanelItem.create({ data: this._data[i], container: this._container, chat: this._chat, panel: this });
+					this._items.push(item);
+					item.layout();
+				}
+			}
+			this._hasLayout = true;
 		},
 		cleanLayout: function()
 		{
+			if(!this._hasLayout)
+			{
+				return;
+			}
+			
+			this.hideStub();
+		
 			for(var i = 0; i < this._items.length; i++)
 			{
 				this._items[i].cleanLayout();
 			}
 			this._items = [];
+			
+			this._hasLayout = false;
+		},
+		showStub: function()
+		{
+			if(this._message === null)
+			{
+				this._message = Message.create(
+					{ 
+						container: this._container, 
+						type: MessageType.info,
+						text: "There is no history for selected user.",
+						enableCloseButton: false
+					}
+				)
+				this._message.layout();
+			}
+		},
+		hideStub: function()
+		{
+			if(this._message)
+			{
+				this._message.close();
+				this._message = null;
+			}
 		}
 	};
 	
@@ -788,9 +861,13 @@ if(typeof(Message) === "undefined")
 				className = "alert alert-info fade in";
 			}			
 			this._wrapper = $("<div/>", { "class": className });
-			this._closeButton = $("<a/>", { "class": "close", text: "x" });
-			this._closeButton.on("click", $.proxy(this.onCloseButtonClick, this));
-			this._wrapper.append(this._closeButton);
+			
+			if(this.getSetting("enableCloseButton", true))
+			{
+				this._closeButton = $("<a/>", { "class": "close", text: "x" });
+				this._closeButton.on("click", $.proxy(this.onCloseButtonClick, this));
+				this._wrapper.append(this._closeButton);				
+			}			
 			
 			var title = "";
 			if(this._type == MessageType.error)
@@ -818,9 +895,13 @@ if(typeof(Message) === "undefined")
 				this._wrapper = null;
 			}
 		},
-		onCloseButtonClick: function(e)
+		close: function()
 		{
 			this.cleanLayout();
+		},
+		onCloseButtonClick: function(e)
+		{
+			this.close();
 			e.preventDefault();
 		}		
 	};

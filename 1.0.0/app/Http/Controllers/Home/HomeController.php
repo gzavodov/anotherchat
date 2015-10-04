@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Controllers\Chat;
+namespace App\Http\Controllers\Home;
 
 use Auth;
 use Request;
@@ -7,7 +7,7 @@ use App\User;
 use App\Http\Controllers\Controller;
 use App\Message;
 
-class ChatController extends Controller
+class HomeController extends Controller
 {
 	private $user = null;
     public function __construct()
@@ -36,6 +36,18 @@ class ChatController extends Controller
 		
 		return "ws://{$serverName}:{$port}";
 	}
+	
+	/**
+	 * Show the home page.
+	 *
+	 * @return \Illuminate\Http\Response
+	 */	
+	public function getHomePage()
+	{
+		$user = $this->getUser();
+		return redirect($user->isAdmin() ? 'home/admin' : 'home/user');
+	}	
+	
 	/**
 	 * Show the user page.
 	 *
@@ -44,8 +56,14 @@ class ChatController extends Controller
 	public function getChatPage()
 	{
 		$user = $this->getUser();
+		if($user->isAdmin())
+		{
+			return redirect('home/admin');
+		}
+		
+		$user = $this->getUser();
 		return view(
-			'chat/user', 
+			'home/user', 
 			[ 
 				'userId' => $user->id, 
 				'userName' => $user->name,
@@ -64,11 +82,11 @@ class ChatController extends Controller
 		$user = $this->getUser();
 		if(!$user->isAdmin())
 		{
-			return redirect('chat/user');
+			return redirect('home/user');
 		}
 		
 		return view(
-			'chat/admin', 
+			'home/admin', 
 			[ 
 				'userId' => $user->id, 
 				'userName' => $user->name,
