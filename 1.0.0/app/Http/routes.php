@@ -12,12 +12,12 @@
 */
 
 
-Route::get('/', function () { return view('welcome'); });
+Route::get('/', 'Home\HomeController@getHomePage');
+Route::get('home', 'Home\HomeController@getHomePage');
+Route::get('home/user', 'Home\HomeController@getChatPage');
+Route::get('home/admin', 'Home\HomeController@getAdminPage');
 Route::get('auth/logout', 'Auth\CustomAuthController@getLogout');
 Route::get('auth/{action?}', 'Auth\CustomAuthController@getLoginRegister');
 Route::post('auth/login', 'Auth\CustomAuthController@postLogin');
 Route::post('auth/register', 'Auth\CustomAuthController@postRegister');
-Route::get('home', 'Home\HomeController@getHomePage');
-Route::get('home/user', 'Home\HomeController@getChatPage');
-Route::get('home/admin', 'Home\HomeController@getAdminPage');
 Route::controllers([ 'password' => 'Auth\PasswordController', 'auth' => 'Auth\CustomAuthController' ]);
